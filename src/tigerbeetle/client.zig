@@ -426,7 +426,8 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     }
                     //try args.appendSlice(&[_]ObjectST{object});
                     var next_item = try args.addOne();
-                    std.debug.print("\n\n\n\nHERE: {any} {any}\n\n\n\n", .{ @alignOf(@TypeOf(next_item)), @alignOf(@TypeOf(next_item.*)) });
+                    var prev = if (args.items.len > 1) &args.items[args.items.len - 2] else next_item;
+                    std.debug.print("\n\n\nAddresses: prev: {*} next: {*}, object: {*}\n\n\n", .{ prev, next_item, &object });
                     next_item.* = object;
                 }
                 std.debug.print("After final field\n", .{});
