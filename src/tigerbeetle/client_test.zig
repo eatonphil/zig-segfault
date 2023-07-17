@@ -11,7 +11,7 @@ const StateMachine = vsr.state_machine.StateMachineType(Storage, constants.state
 const VSRClient = vsr.Client(StateMachine, MessageBus);
 
 const client = @import("./client.zig");
-const Client = client.ClientType(StateMachine, MessageBus);
+const Client = client.ClientType(StateMachine, vsr.message_bus.MessageBusClient);
 
 test "client.zig: Parse single transfer successfully" {
     var context = try alloc.create(Client.Context);
@@ -318,6 +318,21 @@ test "client.zig: Parse multiple accounts successfully" {
         for (t.want) |want, i| {
             try std.testing.expectEqual(want, stmt.args[i].account);
         }
+
+        var args = std.ArrayList([:0]const u8).init(arena.allocator());
+        try args.appendSlice(&[_][:0]const u8{
+            try arena.allocator().dupeZ(u8, try std.fmt.allocPrint(
+                arena.allocator(),
+                "--command={s}",
+                .{t.in},
+            )),
+        });
+
+        try Client.run(
+            arena,
+            args,
+            try vsr.parse_addresses(arena.allocator(), "3001", 1),
+        );
     }
 }
 

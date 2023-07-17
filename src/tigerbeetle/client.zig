@@ -485,25 +485,25 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
 
             context.debug("Connecting to '{s}'.\n", .{addresses});
 
-            const client_id = std.crypto.random.int(u128);
-            const cluster_id: u32 = 0;
+            //const client_id = std.crypto.random.int(u128);
+            //const cluster_id: u32 = 0;
 
-            var io = try IO.init(32, 0);
+            //var io = try IO.init(32, 0);
 
-            var message_pool = try MessagePool.init(allocator, .client);
+            //var message_pool = try MessagePool.init(allocator, .client);
 
-            var client = try Client.init(
-                allocator,
-                client_id,
-                cluster_id,
-                @intCast(u8, addresses.len),
-                &message_pool,
-                .{
-                    .configuration = addresses,
-                    .io = &io,
-                },
-            );
-            context.client = &client;
+            // var client = try Client.init(
+            //     allocator,
+            //     client_id,
+            //     cluster_id,
+            //     @intCast(u8, addresses.len),
+            //     &message_pool,
+            //     .{
+            //         .configuration = addresses,
+            //         .io = &io,
+            //     },
+            // );
+            //context.client = &client;
 
             var execution_arena = &std.heap.ArenaAllocator.init(allocator);
 
@@ -527,8 +527,8 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     execution_arena = &std.heap.ArenaAllocator.init(allocator);
                     repl(context, execution_arena) catch return;
                 }
-                context.client.tick();
-                try io.run_for_ns(constants.tick_ms * std.time.ns_per_ms);
+                //context.client.tick();
+                //try io.run_for_ns(constants.tick_ms * std.time.ns_per_ms);
             }
         }
 
@@ -584,11 +584,11 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             }
 
             // Submit batch.
-            send(
-                context,
-                if (std.mem.eql(u8, t, "account")) .lookup_accounts else .lookup_transfers,
-                std.mem.sliceAsBytes(ids.items),
-            );
+            // send(
+            //     context,
+            //     if (std.mem.eql(u8, t, "account")) .lookup_accounts else .lookup_transfers,
+            //     std.mem.sliceAsBytes(ids.items),
+            //);
         }
 
         fn send(
