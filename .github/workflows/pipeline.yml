@@ -1,14 +1,7 @@
 on:
-  # Run on Merge queue
-  merge_group:
-
-  # Run CI for any PRs that target 'main' when they are opened or updated.
-  pull_request:
+  push:
     branches:
-      - 'main'
-    types:
-      - opened
-      - synchronize
+      - main
 
 jobs:
   cli_client_integration:
