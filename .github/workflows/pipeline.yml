@@ -1,0 +1,20 @@
+on:
+  # Run on Merge queue
+  merge_group:
+
+  # Run CI for any PRs that target 'main' when they are opened or updated.
+  pull_request:
+    branches:
+      - 'main'
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  cli_client_integration:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./scripts/install.sh
+      - run: ./scripts/build.sh cli_client_integration
+      - run: ./zig-out/bin/cli_client_integration
