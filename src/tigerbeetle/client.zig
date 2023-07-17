@@ -413,6 +413,7 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     has_fields = true;
                 }
 
+                std.debug.print("Before final field\n", .{});
                 // Add final object.
                 if (has_fields) {
                     // This works around a segfault that seems itself
