@@ -422,6 +422,7 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     try args.appendSlice(&[_]ObjectST{object});
                     //try args.append(object);
                 }
+                std.debug.print("After final field\n", .{});
 
                 return StatementST{
                     .cmd = cmd,
