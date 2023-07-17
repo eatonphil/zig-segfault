@@ -150,7 +150,9 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                 var index = eat_whitespace(input, initial_index);
                 var after_whitespace = index;
 
-                while (index < input.len and (std.ascii.isAlpha(input[index]) or input[index] == '_')) {
+                while (index < input.len and
+                    (std.ascii.isAlpha(input[index]) or input[index] == '_'))
+                {
                     index += 1;
                 }
 
@@ -183,6 +185,22 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                 while (index < input.len) {
                     const c = input[index];
                     if (!(std.ascii.isAlNum(c) or c == '_' or c == '|')) {
+                        // Allows flag fields to have whitespace before a '|'.
+                        var maybe_more_index = eat_whitespace(input, index);
+                        if (maybe_more_index < input.len and input[maybe_more_index] == '|') {
+                            index = maybe_more_index;
+                            continue;
+                        }
+
+                        // Allow flag fields to have whitespace after a '|'.
+                        if (maybe_more_index < input.len and
+                            index > 0 and
+                            input[index - 1] == '|')
+                        {
+                            index = maybe_more_index;
+                            continue;
+                        }
+
                         break;
                     }
 
@@ -212,7 +230,10 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                                     !std.mem.eql(u8, field.name, "reserved") and
                                     !std.mem.eql(u8, field.name, "timestamp")))
                                 {
-                                    @field(@field(out.*, enum_field.name), field.name) = try std.fmt.parseInt(
+                                    @field(
+                                        @field(out.*, enum_field.name),
+                                        field.name,
+                                    ) = try std.fmt.parseInt(
                                         field.field_type,
                                         value,
                                         10,
@@ -226,9 +247,20 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                                     var flags = std.mem.split(u8, value, "|");
                                     var f = std.mem.zeroInit(field.field_type, .{});
                                     while (flags.next()) |flag| {
-                                        inline for (@typeInfo(field.field_type).Struct.fields) |flag_field| {
-                                            if (std.mem.eql(u8, flag_field.name, flag)) {
-                                                if (comptime !std.mem.eql(u8, flag_field.name, "padding")) {
+                                        var flag_no_ws = std.mem.trim(
+                                            u8,
+                                            flag,
+                                            std.ascii.spaces[0..],
+                                        );
+                                        inline for (@typeInfo(
+                                            field.field_type,
+                                        ).Struct.fields) |flag_field| {
+                                            if (std.mem.eql(u8, flag_field.name, flag_no_ws)) {
+                                                if (comptime !std.mem.eql(
+                                                    u8,
+                                                    flag_field.name,
+                                                    "padding",
+                                                )) {
                                                     @field(f, flag_field.name) = true;
                                                 }
                                             }
@@ -252,7 +284,7 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             //
             // For example:
             //   create_accounts id=1 code=2 ledger=3, id = 2 code= 2 ledger =3;
-            //   create_accounts flags=linked|debits_must_not_exceed_credits;
+            //   create_accounts flags=linked | debits_must_not_exceed_credits ;
             pub fn parse_statement(
                 context: *Context,
                 arena: *std.heap.ArenaAllocator,
@@ -280,7 +312,10 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     context.err_at(
                         input,
                         after_whitespace,
-                        "Command must be help, create_accounts, lookup_accounts, create_transfers, or lookup_transfers. Got: '{s}'.\n",
+                        \\Command must be help, create_accounts, lookup_accounts,
+                        \\create_transfers, or lookup_transfers. Got: '{s}'.
+                        \\
+                    ,
                         .{id_result.string},
                     );
                     return error.BadCommand;
@@ -321,13 +356,24 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     i = id_result.next_index;
 
                     if (id_result.string.len == 0) {
-                        context.err_at(input, i, "Expected key starting key-value pair. e.g. `id=1`\n", .{});
+                        context.err_at(
+                            input,
+                            i,
+                            "Expected key starting key-value pair. e.g. `id=1`\n",
+                            .{},
+                        );
                         return error.BadIdentifier;
                     }
 
                     // Grab =.
                     i = parse_syntax(input, i, '=') catch |e| {
-                        context.err_at(input, i, "Expected equal sign after key in key-value pair: {any}. e.g. `id=1`.\n", .{e});
+                        context.err_at(
+                            input,
+                            i,
+                            "Expected equal sign after key in key-value" ++
+                                " pair: {any}. e.g. `id=1`.\n",
+                            .{e},
+                        );
                         return error.MissingEqualBetweenKeyValuePair;
                     };
 
@@ -336,7 +382,12 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     i = value_result.next_index;
 
                     if (value_result.string.len == 0) {
-                        context.err_at(input, i, "Expected value after equal sign in key-value pair. e.g. `id=1`.\n", .{});
+                        context.err_at(
+                            input,
+                            i,
+                            "Expected value after equal sign in key-value pair. e.g. `id=1`.\n",
+                            .{},
+                        );
                         return error.BadValue;
                     }
 
@@ -345,7 +396,7 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                         context.err_at(
                             input,
                             i,
-                            "'{s}'='{s}' is not a valid pair for {s}: {any}.",
+                            "'{s}'='{s}' is not a valid pair for {s}: {any}.\n",
                             .{ id_result.string, value_result.string, @tagName(object), e },
                         );
                         return error.BadKeyValuePair;
@@ -360,11 +411,10 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
 
                 // Add final object.
                 if (has_fields) {
-                    {
-                        std.debug.print("trying stuff.\n", .{});
-                        //try args.appendSlice(&[_]ObjectST{object});
-                        try args.append(object);
-                    }
+                    // This works around a segfault that seems itself
+                    // to be a bug since it only shows up x86_64/macos
+                    // on Github Actions.
+                    try args.appendSlice(&[_]ObjectST{object});
                 }
 
                 return StatementST{
@@ -382,10 +432,32 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             if (stmt.cmd) |cmd| {
                 context.debug("Running command: {}.\n", .{cmd});
                 switch (cmd) {
-                    .create_accounts => try create(tb.Account, .account, context, arena, stmt.args),
-                    .lookup_accounts => try lookup("account", context, arena, stmt.args),
-                    .create_transfers => try create(tb.Transfer, .transfer, context, arena, stmt.args),
-                    .lookup_transfers => try lookup("transfer", context, arena, stmt.args),
+                    .create_accounts => try create(
+                        tb.Account,
+                        .account,
+                        context,
+                        arena,
+                        stmt.args,
+                    ),
+                    .lookup_accounts => try lookup(
+                        "account",
+                        context,
+                        arena,
+                        stmt.args,
+                    ),
+                    .create_transfers => try create(
+                        tb.Transfer,
+                        .transfer,
+                        context,
+                        arena,
+                        stmt.args,
+                    ),
+                    .lookup_transfers => try lookup(
+                        "transfer",
+                        context,
+                        arena,
+                        stmt.args,
+                    ),
                 }
                 return;
             }
@@ -440,7 +512,11 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                 \\Examples:
                 \\  create_accounts id=1 code=10 ledger=700,
                 \\                  id=2 code=10 ledger=700;
-                \\  create_transfers id=1 debit_account_id=1 credit_account_id=2 amount=10 ledger=700 code=10;
+                \\  create_transfers id=1 debit_account_id=1
+                // This should show up on a single line to demonstrate
+                // a long line to the user. However, long lines make our
+                // linter unhappy.
+            ++ " credit_account_id=2 amount=10 ledger=700 code=10;" ++
                 \\  lookup_accounts id=1;
                 \\  lookup_accounts id=1, id=2;
                 \\
@@ -466,7 +542,6 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                         // Already handled by ./cli.zig.
                     } else if (std.mem.startsWith(u8, arg, "--command=")) {
                         statements = arg["--command=".len..];
-                        std.debug.print("\n\n\n\nSTATEMENT: {s}\n\n\n\n", .{statements});
                     } else {
                         err("Unexpected argument: '{s}'.\n", .{arg});
                     }
@@ -486,37 +561,40 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
 
             context.debug("Connecting to '{s}'.\n", .{addresses});
 
-            //const client_id = std.crypto.random.int(u128);
-            //const cluster_id: u32 = 0;
+            const client_id = std.crypto.random.int(u128);
+            const cluster_id: u32 = 0;
 
-            //var io = try IO.init(32, 0);
+            var io = try IO.init(32, 0);
 
-            //var message_pool = try MessagePool.init(allocator, .client);
+            var message_pool = try MessagePool.init(allocator, .client);
 
-            // var client = try Client.init(
-            //     allocator,
-            //     client_id,
-            //     cluster_id,
-            //     @intCast(u8, addresses.len),
-            //     &message_pool,
-            //     .{
-            //         .configuration = addresses,
-            //         .io = &io,
-            //     },
-            // );
-            //context.client = &client;
-
-            var execution_arena = &std.heap.ArenaAllocator.init(allocator);
+            var client = try Client.init(
+                allocator,
+                client_id,
+                cluster_id,
+                @intCast(u8, addresses.len),
+                &message_pool,
+                .{
+                    .configuration = addresses,
+                    .io = &io,
+                },
+            );
+            context.client = &client;
 
             if (statements) |stmts_| {
                 var stmts = std.mem.split(u8, stmts_, ";");
                 while (stmts.next()) |stmt_string| {
                     // Gets reset after every execution.
-                    execution_arena.deinit();
-                    execution_arena = &std.heap.ArenaAllocator.init(allocator);
-                    var stmt = Parse.parse_statement(context, execution_arena, stmt_string) catch return;
+                    var execution_arena = &std.heap.ArenaAllocator.init(
+                        std.heap.loggingAllocator(allocator).allocator(),
+                    );
+                    defer execution_arena.deinit();
+                    var stmt = Parse.parse_statement(
+                        context,
+                        execution_arena,
+                        stmt_string,
+                    ) catch return;
                     do_statement(context, execution_arena, stmt) catch return;
-                    break;
                 }
             } else {
                 display_help();
@@ -525,17 +603,14 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             while (!context.event_loop_done) {
                 if (context.request_done and context.repl) {
                     // Gets reset after every execution.
-                    execution_arena.deinit();
-                    execution_arena = &std.heap.ArenaAllocator.init(allocator);
+                    var execution_arena = &std.heap.ArenaAllocator.init(
+                        std.heap.loggingAllocator(allocator).allocator(),
+                    );
+                    defer execution_arena.deinit();
                     repl(context, execution_arena) catch return;
-                    break;
                 }
-
-                if (!context.repl) {
-                    break;
-                }
-                //context.client.tick();
-                //try io.run_for_ns(constants.tick_ms * std.time.ns_per_ms);
+                context.client.tick();
+                try io.run_for_ns(constants.tick_ms * std.time.ns_per_ms);
             }
         }
 
@@ -554,22 +629,21 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             var allocator = arena.allocator();
             var batch = try std.ArrayList(T).initCapacity(allocator, objects.len);
 
-            var i: u32 = 0;
-            while (i < objects.len) : (i += 1) {
-                batch.appendAssumeCapacity(@field(objects[i], @tagName(name)));
+            for (objects) |object| {
+                batch.appendAssumeCapacity(@field(object, @tagName(name)));
             }
 
             assert(batch.items.len == objects.len);
 
             // Submit batch.
-            // send(
-            //     context,
-            //     switch (name) {
-            //         .account => .create_accounts,
-            //         .transfer => .create_transfers,
-            //     },
-            //     std.mem.sliceAsBytes(batch.items),
-            // );
+            send(
+                context,
+                switch (name) {
+                    .account => .create_accounts,
+                    .transfer => .create_transfers,
+                },
+                std.mem.sliceAsBytes(batch.items),
+            );
         }
 
         fn lookup(
@@ -591,11 +665,11 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             }
 
             // Submit batch.
-            // send(
-            //     context,
-            //     if (std.mem.eql(u8, t, "account")) .lookup_accounts else .lookup_transfers,
-            //     std.mem.sliceAsBytes(ids.items),
-            //);
+            send(
+                context,
+                if (std.mem.eql(u8, t, "account")) .lookup_accounts else .lookup_transfers,
+                std.mem.sliceAsBytes(ids.items),
+            );
         }
 
         fn send(

@@ -9,7 +9,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: DEBUG=true ./scripts/install.sh
-      - run: ./tigerbeetle client --addresses=3000 --command="create_accounts id=1 flags=linked code=10 ledger=700, id=2 code=10 ledger=700"
+      - run: ./tigerbeetle format --cluster=0 --replica=0 --replica-count=1 0_0.tigerbeetle
+        run: |
+          ./tigerbeetle start --addresses=3000 0_0.tigerbeetle &
+          PID=$!
+          ./tigerbeetle client --addresses=3000 --command="create_accounts id=1 flags=linked code=10 ledger=700, id=2 code=10 ledger=700"
+          kill -9 $PID
       #- run: ./scripts/build.sh test -Dtest-filter="client.zig:"
       #- run: ./scripts/build.sh cli_client_integration
       #- run: ./zig-out/bin/cli_client_integration
