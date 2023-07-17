@@ -293,6 +293,7 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                 var args = std.ArrayList(ObjectST).init(arena.allocator());
 
                 var after_whitespace: usize = eat_whitespace(input, 0);
+                std.debug.print("Before command\n", .{});
                 var id_result = try parse_identifier(input, after_whitespace);
                 var i = id_result.next_index;
 
@@ -321,6 +322,7 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     return error.BadCommand;
                 }
 
+                std.debug.print("Before object\n", .{});
                 var default = Parse.ObjectST{ .id = .{ .id = 0 } };
                 if (cmd) |c| {
                     if (c == .create_accounts) {
@@ -340,6 +342,8 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     if (i >= input.len or input[i] == ';') {
                         break;
                     }
+
+                    std.debug.print("Before field\n", .{});
 
                     // Expect comma separating objects.
                     if (i < input.len and input[i] == ',') {
@@ -497,7 +501,9 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                 return e;
             }
 
+            std.debug.print("Before parse_statement\n", .{});
             var stmt = Parse.parse_statement(context, arena, input) catch return;
+            std.debug.print("After parse_statement\n", .{});
             try do_statement(
                 context,
                 arena,
@@ -590,11 +596,13 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                         std.heap.loggingAllocator(allocator).allocator(),
                     );
                     defer execution_arena.deinit();
+                    std.debug.print("Before parse_statement\n", .{});
                     var stmt = Parse.parse_statement(
                         context,
                         execution_arena,
                         stmt_string,
                     ) catch return;
+                    std.debug.print("After parse_statement\n", .{});
                     do_statement(context, execution_arena, stmt) catch return;
                 }
             } else {
