@@ -419,6 +419,11 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     // This works around a segfault that seems itself
                     // to be a bug since it only shows up x86_64/macos
                     // on Github Actions.
+                    switch (object) {
+                        .transfer => |t| std.debug.print("Transfer: {any}\n", .{t}),
+                        .account => |a| std.debug.print("Account: {any}\n", .{a}),
+                        .id => |_i| std.debug.print("ID: {any}\n", .{_i}),
+                    }
                     try args.appendSlice(&[_]ObjectST{object});
                     //try args.append(object);
                 }
