@@ -504,12 +504,14 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             );
             context.client = &client;
 
+            var execution_arena = &std.heap.ArenaAllocator.init(allocator);
+
             if (statements) |stmts_| {
                 var stmts = std.mem.split(u8, stmts_, ";");
                 while (stmts.next()) |stmt_string| {
                     // Gets reset after every execution.
-                    var execution_arena = &std.heap.ArenaAllocator.init(std.heap.loggingAllocator(allocator).allocator());
-                    defer execution_arena.deinit();
+                    execution_arena.deinit();
+                    execution_arena = &std.heap.ArenaAllocator.init(allocator);
                     var stmt = Parse.parse_statement(context, execution_arena, stmt_string) catch return;
                     do_statement(context, execution_arena, stmt) catch return;
                 }
@@ -520,8 +522,8 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             while (!context.event_loop_done) {
                 if (context.request_done and context.repl) {
                     // Gets reset after every execution.
-                    var execution_arena = &std.heap.ArenaAllocator.init(std.heap.loggingAllocator(allocator).allocator());
-                    defer execution_arena.deinit();
+                    execution_arena.deinit();
+                    execution_arena = &std.heap.ArenaAllocator.init(allocator);
                     repl(context, execution_arena) catch return;
                 }
                 context.client.tick();
