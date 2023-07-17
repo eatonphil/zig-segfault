@@ -424,8 +424,8 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                         .account => |a| std.debug.print("Account: {any}\n", .{a}),
                         .id => |_i| std.debug.print("ID: {any}\n", .{_i}),
                     }
-                    try args.appendSlice(&[_]ObjectST{object});
-                    //try args.append(object);
+                    //try args.appendSlice(&[_]ObjectST{object});
+                    try args.append(object);
                 }
                 std.debug.print("After final field\n", .{});
 
