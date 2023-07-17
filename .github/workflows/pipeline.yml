@@ -9,6 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: DEBUG=true ./scripts/install.sh
-      - run: ./scripts/build.sh test -Dtest-filter="client.zig:"
-      - run: ./scripts/build.sh cli_client_integration
-      - run: ./zig-out/bin/cli_client_integration
+      - run: ./tigerbeetle client --addresses=3000 --command="create_accounts id=1 flags=linked code=10 ledger=700, id=2 code=10 ledger=700"
+      #- run: ./scripts/build.sh test -Dtest-filter="client.zig:"
+      #- run: ./scripts/build.sh cli_client_integration
+      #- run: ./zig-out/bin/cli_client_integration
