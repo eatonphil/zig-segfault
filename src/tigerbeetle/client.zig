@@ -425,10 +425,9 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                         .id => |_i| std.debug.print("ID: {any}\n", .{_i}),
                     }
                     //try args.appendSlice(&[_]ObjectST{object});
-                    var next_item = try args.addOne();
-                    var prev = if (args.items.len > 1) &args.items[args.items.len - 2] else next_item;
-                    std.debug.print("\n\n\nAddresses: prev: {*} next: {*}, object: {*}\n\n\n", .{ prev, next_item, &object });
-                    next_item.* = object;
+                    var new_args = std.ArrayList(ObjectST).init(arena.allocator());
+                    try new_args.appendSlice(args.items);
+                    try new_args.append(object);
                 }
                 std.debug.print("After final field\n", .{});
 
