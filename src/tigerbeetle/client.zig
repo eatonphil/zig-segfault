@@ -465,6 +465,7 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                         // Already handled by ./cli.zig.
                     } else if (std.mem.startsWith(u8, arg, "--command=")) {
                         statements = arg["--command=".len..];
+                        std.debug.print("\n\n\n\nSTATEMENT: {s}\n\n\n\n", .{statements});
                     } else {
                         err("Unexpected argument: '{s}'.\n", .{arg});
                     }
@@ -554,14 +555,14 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             assert(batch.items.len == objects.len);
 
             // Submit batch.
-            send(
-                context,
-                switch (name) {
-                    .account => .create_accounts,
-                    .transfer => .create_transfers,
-                },
-                std.mem.sliceAsBytes(batch.items),
-            );
+            // send(
+            //     context,
+            //     switch (name) {
+            //         .account => .create_accounts,
+            //         .transfer => .create_transfers,
+            //     },
+            //     std.mem.sliceAsBytes(batch.items),
+            // );
         }
 
         fn lookup(
