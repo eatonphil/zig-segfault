@@ -515,6 +515,7 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     execution_arena = &std.heap.ArenaAllocator.init(allocator);
                     var stmt = Parse.parse_statement(context, execution_arena, stmt_string) catch return;
                     do_statement(context, execution_arena, stmt) catch return;
+                    break;
                 }
             } else {
                 display_help();
@@ -526,6 +527,11 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     execution_arena.deinit();
                     execution_arena = &std.heap.ArenaAllocator.init(allocator);
                     repl(context, execution_arena) catch return;
+                    break;
+                }
+
+                if (!context.repl) {
+                    break;
                 }
                 //context.client.tick();
                 //try io.run_for_ns(constants.tick_ms * std.time.ns_per_ms);
