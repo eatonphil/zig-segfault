@@ -414,8 +414,8 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                     // This works around a segfault that seems itself
                     // to be a bug since it only shows up x86_64/macos
                     // on Github Actions.
-                    //try args.appendSlice(&[_]ObjectST{object});
-                    try args.append(object);
+                    try args.appendSlice(&[_]ObjectST{object});
+                    //try args.append(object);
                 }
 
                 return StatementST{
