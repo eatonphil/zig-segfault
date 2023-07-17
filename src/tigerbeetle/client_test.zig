@@ -270,6 +270,37 @@ test "client.zig: Parse multiple accounts successfully" {
                 },
             },
         },
+        .{
+            .in = "create_accounts id=1 flags=linked code=10 ledger=700, id=2 code=10 ledger=700",
+            .want = [2]tb.Account{
+                .{
+                    .id = 1,
+                    .user_data = 0,
+                    .reserved = [_]u8{0} ** 48,
+                    .ledger = 700,
+                    .code = 10,
+                    .debits_pending = 0,
+                    .debits_posted = 0,
+                    .credits_pending = 0,
+                    .credits_posted = 0,
+                    .flags = .{
+                        .linked = true,
+                    },
+                },
+                .{
+                    .id = 2,
+                    .user_data = 0,
+                    .reserved = [_]u8{0} ** 48,
+                    .ledger = 700,
+                    .code = 10,
+                    .debits_pending = 0,
+                    .debits_posted = 0,
+                    .credits_pending = 0,
+                    .credits_posted = 0,
+                    .flags = .{},
+                },
+            },
+        },
     };
 
     for (tests) |t| {

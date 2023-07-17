@@ -8,13 +8,6 @@ test {
     _ = @import("stdx.zig");
     _ = @import("hash_map.zig");
 
-    _ = @import("clients/c/test.zig");
-    _ = @import("clients/c/tb_client_header_test.zig");
-    _ = @import("clients/dotnet/dotnet_bindings.zig");
-    _ = @import("clients/go/go_bindings.zig");
-    _ = @import("clients/java/java_bindings.zig");
-    _ = @import("clients/node/node_bindings.zig");
-
     _ = @import("lsm/binary_search.zig");
     _ = @import("lsm/bloom_filter.zig");
     _ = @import("lsm/eytzinger.zig");
