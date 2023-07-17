@@ -629,8 +629,9 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             var allocator = arena.allocator();
             var batch = try std.ArrayList(T).initCapacity(allocator, objects.len);
 
-            for (objects) |object| {
-                batch.appendAssumeCapacity(@field(object, @tagName(name)));
+            var i: u32 = 0;
+            while (i < objects.len) : (i += 1) {
+                batch.appendAssumeCapacity(@field(objects[i], @tagName(name)));
             }
 
             assert(batch.items.len == objects.len);
@@ -660,8 +661,9 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
             var allocator = arena.allocator();
             var ids = try std.ArrayList(u128).initCapacity(allocator, objects.len);
 
-            for (objects) |object| {
-                try ids.append(object.id.id);
+            var i: u32 = 0;
+            while (i < objects.len) : (i += 1) {
+                try ids.append(objects[i].id.id);
             }
 
             // Submit batch.
