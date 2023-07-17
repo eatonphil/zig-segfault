@@ -362,7 +362,8 @@ pub fn ClientType(comptime StateMachine: type, comptime MessageBus: type) type {
                 if (has_fields) {
                     {
                         std.debug.print("trying stuff.\n", .{});
-                        try args.appendSlice(&[_]ObjectST{object});
+                        //try args.appendSlice(&[_]ObjectST{object});
+                        try args.append(object);
                     }
                 }
 
